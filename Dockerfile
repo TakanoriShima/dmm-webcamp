@@ -100,15 +100,15 @@ RUN cd \
     && sudo make install
 
 # install MySQL 8.0
-RUN sudo yum localinstall -y https://dev.mysql.com/get/mysql80-community-release-el7-5.noarch.rpm 
-RUN sudo yum install -y --enablerepo=mysql80-community mysql-community-server 
-RUN sudo yum install -y --enablerepo=mysql80-community mysql-community-devel 
-RUN sudo touch /var/log/mysqld.log 
-RUN sudo systemctl enable mysqld
+# RUN sudo yum localinstall -y https://dev.mysql.com/get/mysql80-community-release-el7-5.noarch.rpm 
+# RUN sudo yum install -y --enablerepo=mysql80-community mysql-community-server 
+# RUN sudo yum install -y --enablerepo=mysql80-community mysql-community-devel 
+# RUN sudo touch /var/log/mysqld.log 
+# RUN sudo systemctl enable mysqld
 
 # install MariaDB 10.5
-# RUN sudo amazon-linux-extras install mariadb10.5 \
-#     && sudo systemctl enable mariadb.service
+RUN sudo amazon-linux-extras install mariadb10.5 \
+    && sudo systemctl enable mariadb.service
 
 # customize bash prompt
 COPY prompt.sh /home/${USERNAME}/prompt.sh
