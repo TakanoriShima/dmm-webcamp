@@ -1,0 +1,63 @@
+# Dockerコンテナ作成
+docker-compose up -d
+
+1) --- MySQL 8.0 の場合
+# MySQLのrootの初期パスワード確認
+sudo cat /var/log/mysqld.log | grep "temporary password" | awk '{print $13}'
+
+# rootパスワード変更
+mysql -u root -p
+初期パスワードは上記の表示結果
+mysql> ALTER USER 'root'@'localhost' identified BY 'dmm%WEBCAMP2023';
+mysql> exit
+
+2) --- MariaDB 10.5 の場合
+# MariaDBの初期設定
+sudo mysql_secure_installation
+rootパスワードを dmm%WEBCAMP2023 に設定
+
+1), 2) とも以下を実行
+mysql -u root -p
+パスワードは dmm%WEBCAMP2023
+mysql> source docs/setup.sql;
+mysql> CREATE USER 'todouser'@'localhost' IDENTIFIED BY 'dmm%WEBCAMP2023';
+mysql> GRANT all ON todolist.* TO 'todouser'@'localhost';
+mysql> exit
+
+
+# アプリのクローンと起動
+docs/app.sh
+
+cd meshiterro
+bundle install
+rm -rf config/credentials.yml.enc
+EDITOR=vim rails credentials:edit
+rails db:migrate
+rails s -p 80
+
+cd ..
+
+cd todolist
+composer install
+cp .env.example .env 
+php artisan key:generate
+
+.env変更
+```
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=todolist
+DB_USERNAME=todouser
+DB_PASSWORD=dmm%WEBCAMP2023
+```
+
+php artisan migrate
+php artisan db:seed --class=FrontAuthUser
+php artisan db:seed --class=AdminAuthUser
+php artisan serve --port=8080
+
+# PHP プログラムの実行
+cd docs/PHP
+php -S localhost:8080 -c php.ini
+

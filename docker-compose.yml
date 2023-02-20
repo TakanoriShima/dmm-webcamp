@@ -1,0 +1,8 @@
+version: "3.7"
+
+services:
+  amazonlinux2:
+    build: .
+    container_name: dmm-webcamp
+    privileged: true
+    restart: always
