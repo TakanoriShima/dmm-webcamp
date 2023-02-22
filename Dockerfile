@@ -27,12 +27,16 @@ RUN yum update -y \
         libpng-devel \
         libjpeg-devel \
         libtiff-devel \
+        openssl-devel \
+        zlib-devel \
+        configure \
         -y
 
 # setenv
-ENV RUBY_VERSION="2.6.3" \
-    RAILS_VERSION="5.2.5" \
-    NOKOGIRI_VERSION="1.13.10" \
+ENV RUBY_VERSION="3.1.2" \
+    RAILS_VERSION="6.1.4" \
+    NOKOGIRI_VERSION="1.14.1" \
+    YARN_VERSION="1.22.19" \
     USERNAME="ec2-user" \
     PASSWORD="password"
 
@@ -53,6 +57,13 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
 # install node.js
 RUN curl --silent --location https://rpm.nodesource.com/setup_16.x | sudo bash - \
     && sudo yum install -y nodejs
+
+# install yarn
+RUN curl -L --compressed "https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz" > /tmp/yarn.tar.gz \ 
+    && sudo tar -xzf /tmp/yarn.tar.gz -C /opt && \
+    sudo ln -s /opt/yarn-v$YARN_VERSION/bin/yarn /usr/local/bin/yarn && \
+    sudo ln -s /opt/yarn-v$YARN_VERSION/bin/yarnpkg /usr/local/bin/yarnpkg && \
+    sudo rm /tmp/yarn.tar.gz
 
 # install php7.4
 RUN sudo amazon-linux-extras install -y php7.4 \
@@ -76,20 +87,29 @@ RUN git clone https://github.com/sstephenson/rbenv.git ~/.rbenv \
     && echo 'export PATH="/usr/local/bin/aws:$PATH"' | tee -a ~/.bash_profile \
     && source ~/.bash_profile
 
-# install Ruby 2.6.3
+# install Ruby 3.1.2
 ENV PATH $PATH:~/.rbenv/bin
 ENV PATH $PATH:~/.rbenv/shims
 RUN rbenv install ${RUBY_VERSION}
 RUN rbenv global ${RUBY_VERSION}
 
-# install Rails 5.2.5
+# install Rails 6.1.4
 RUN gem install nokogiri -v ${NOKOGIRI_VERSION}
 RUN gem install rails -v ${RAILS_VERSION}
 
-# install SQLite 3.8.11
-RUN sudo wget https://kojipkgs.fedoraproject.org//packages/sqlite/3.8.11/1.fc21/x86_64/sqlite-devel-3.8.11-1.fc21.x86_64.rpm \
-    && sudo wget https://kojipkgs.fedoraproject.org//packages/sqlite/3.8.11/1.fc21/x86_64/sqlite-3.8.11-1.fc21.x86_64.rpm \
-    && sudo yum -y install sqlite-3.8.11-1.fc21.x86_64.rpm sqlite-devel-3.8.11-1.fc21.x86_64.rpm 
+# install SQLite 3.36.0
+RUN sudo wget https://www.sqlite.org/2021/sqlite-autoconf-3360000.tar.gz \
+    && sudo tar xzvf sqlite-autoconf-3360000.tar.gz \
+    && sudo sqlite-autoconf-3360000/configure --prefix=/opt/sqlite/sqlite3 \ 
+    && sudo make \
+    && sudo make install \
+    && /opt/sqlite/sqlite3/bin/sqlite3 --version \
+    && gem pristine --all \
+    && gem install sqlite3 -- --with-sqlite3-include=/opt/sqlite/sqlite3/include --with-sqlite3-lib=/opt/sqlite/sqlite3/lib \
+    && echo 'export LD_LIBRARY_PATH="/opt/sqlite/sqlite3/lib"' >> ~/.bash_profile \
+    && source ~/.bash_profile \
+    && sudo mv /usr/bin/sqlite3 /usr/bin/sqlite3_old \
+    && sudo ln -s /opt/sqlite/sqlite3/bin/sqlite3 /usr/bin/sqlite3
 
 # install ImageMagick 7.1.0
 RUN cd \
@@ -110,10 +130,11 @@ RUN cd \
 RUN sudo amazon-linux-extras install mariadb10.5 \
     && sudo systemctl enable mariadb.service
 
-# customize bash prompt
+# customize ec2-user bash prompt
 COPY prompt.sh /home/${USERNAME}/prompt.sh
 RUN sudo chmod 755 /home/${USERNAME}/prompt.sh 
 RUN echo 'source ~/prompt.sh' >> /home/${USERNAME}/.bashrc
+RUN echo 'source ~/prompt.sh' >> /home/${USERNAME}/.bash_profile
 
 # git configuration
 RUN git config --global push.default simple
@@ -127,7 +148,6 @@ WORKDIR /home/${USERNAME}/environment
 RUN mkdir docs
 COPY docs/ docs/
 RUN sudo chmod +x docs/app.sh
-
 
 # init
 USER root
