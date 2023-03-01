@@ -3,6 +3,6 @@ version: "3.7"
 services:
   amazonlinux2:
     build: .
-    container_name: dmm-webcamp-rails6new2
+    container_name: dmm-webcamp-rails6
     privileged: true
     restart: always

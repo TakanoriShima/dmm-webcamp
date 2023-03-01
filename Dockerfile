@@ -46,13 +46,13 @@ RUN useradd -m -r -G wheel -s /bin/bash ${USERNAME} \
     && echo '%wheel ALL=(ALL) ALL' | EDITOR='tee -a' visudo \
     && echo "${USERNAME}   ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# switch user after login
-RUN echo 'su "${USERNAME}"' >> ~/.bashrc
-
 # install aws cli v2
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
     && unzip awscliv2.zip \
     && sudo ./aws/install
+
+# change user
+USER ${USERNAME}
 
 # install node.js
 RUN curl --silent --location https://rpm.nodesource.com/setup_16.x | sudo bash - \
@@ -70,14 +70,11 @@ RUN sudo amazon-linux-extras install -y php7.4 \
     && sudo yum install -y php-mbstring php-xml
 
 # install composer
-RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
-    && php -r "if (hash_file('sha384', 'composer-setup.php') === '55ce33d7678c5a611085589f1f3ddf8b3c52d662cd01d4ba75c0ee0459970c2200a51f492d557530c71c15d8dba01eae') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" \
-    && php composer-setup.php \
-    && php -r "unlink('composer-setup.php');" \
+RUN sudo php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
+    && sudo php -r "if (hash_file('sha384', 'composer-setup.php') === '55ce33d7678c5a611085589f1f3ddf8b3c52d662cd01d4ba75c0ee0459970c2200a51f492d557530c71c15d8dba01eae') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" \
+    && sudo php composer-setup.php \
+    && sudo php -r "unlink('composer-setup.php');" \
     && sudo mv composer.phar /usr/local/bin/composer
-
-# change user
-USER ${USERNAME}
 
 # install rbenv
 RUN git clone https://github.com/sstephenson/rbenv.git ~/.rbenv \
@@ -85,7 +82,8 @@ RUN git clone https://github.com/sstephenson/rbenv.git ~/.rbenv \
  && echo 'export PATH="$HOME/.rbenv/bin:$PATH"' | tee -a ~/.bash_profile \
     && echo 'eval "$(rbenv init -)"' | tee -a ~/.bash_profile \
     && echo 'export PATH="/usr/local/bin/aws:$PATH"' | tee -a ~/.bash_profile \
-    && source ~/.bash_profile
+    && source ~/.bash_profile \
+    && source ~/.bashrc
 
 # install Ruby 3.1.2
 ENV PATH $PATH:~/.rbenv/bin
@@ -117,7 +115,8 @@ RUN cd \
     && cd ImageMagick-7.0.11 \
     && ./configure \
     && make \
-    && sudo make install
+    && sudo make install \
+    && sudo rm -rf /home/ec2-user/ImageMagick-7.0.11
 
 # install MySQL 8.0
 # RUN sudo yum localinstall -y https://dev.mysql.com/get/mysql80-community-release-el7-5.noarch.rpm 
@@ -136,6 +135,18 @@ RUN sudo chmod 755 /home/${USERNAME}/prompt.sh
 RUN echo 'source ~/prompt.sh' >> /home/${USERNAME}/.bashrc
 RUN echo 'source ~/prompt.sh' >> /home/${USERNAME}/.bash_profile
 
+# change user
+USER root
+
+COPY prompt.sh /root/prompt.sh
+RUN chmod 755 /root/prompt.sh 
+
+RUN echo 'source ~/prompt.sh' >> /root/.bashrc
+RUN echo 'source ~/prompt.sh' >> /root/.bash_profile
+
+# change user
+USER ${USERNAME}
+
 # git configuration
 RUN git config --global push.default simple
 RUN git config --global user.name TaroDMM
@@ -148,6 +159,7 @@ WORKDIR /home/${USERNAME}/environment
 RUN mkdir docs
 COPY docs/ docs/
 RUN sudo chmod +x docs/app.sh
+RUN chown -R ${USERNAME}:${USERNAME} docs/
 
 # init
 USER root

@@ -19,25 +19,25 @@ rootパスワードを dmm%WEBCAMP2023 に設定
 1), 2) とも以下を実行
 mysql -u root -p
 パスワードは dmm%WEBCAMP2023
-mysql> source docs/setup.sql;
+mysql> source /home/ec2-user/environment/docs/setup.sql;;
 mysql> CREATE USER 'todouser'@'localhost' IDENTIFIED BY 'dmm%WEBCAMP2023';
 mysql> GRANT all ON todolist.* TO 'todouser'@'localhost';
 mysql> exit
 
 
 # アプリのクローンと起動
-docs/app.sh
+/home/ec2-user/environment/docs/app.sh
 
-cd meshiterro
+cd /home/ec2-user/environment/meshiterro
 bundle install
 rm -rf config/credentials.yml.enc
 EDITOR=vim rails credentials:edit
 rails db:migrate
+rails webpacker:install
+rails webpacker:compile
 rails s -p 80
 
-cd ..
-
-cd todolist
+cd /home/ec2-user/environment/todolist
 composer install
 cp .env.example .env 
 php artisan key:generate
@@ -55,9 +55,9 @@ DB_PASSWORD=dmm%WEBCAMP2023
 php artisan migrate
 php artisan db:seed --class=FrontAuthUser
 php artisan db:seed --class=AdminAuthUser
-php artisan serve --port=8080
+php artisan serve --port=80
 
 # PHP プログラムの実行
 cd docs/PHP
-php -S localhost:8080 -c php.ini
+php -S localhost:80 -c php.ini
 
