@@ -159,7 +159,7 @@ WORKDIR /home/${USERNAME}/environment
 RUN mkdir docs
 COPY docs/ docs/
 RUN sudo chmod +x docs/app.sh
-RUN chown -R ${USERNAME}:${USERNAME} docs/
+RUN sudo chown -R ${USERNAME}:${USERNAME} docs/
 
 # init
 USER root
