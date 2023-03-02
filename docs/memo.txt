@@ -19,13 +19,13 @@ rootパスワードを dmm%WEBCAMP2023 に設定
 1), 2) とも以下を実行
 mysql -u root -p
 パスワードは dmm%WEBCAMP2023
-mysql> source /home/ec2-user/environment/docs/setup.sql;;
+mysql> source /home/ec2-user/environment/docs/setup.sql;
 mysql> CREATE USER 'todouser'@'localhost' IDENTIFIED BY 'dmm%WEBCAMP2023';
 mysql> GRANT all ON todolist.* TO 'todouser'@'localhost';
 mysql> exit
 
 
-# アプリのクローンと起動
+# サンプルアプリのクローンと起動
 /home/ec2-user/environment/docs/app.sh
 
 cd /home/ec2-user/environment/meshiterro
@@ -58,6 +58,6 @@ php artisan db:seed --class=AdminAuthUser
 php artisan serve --port=80
 
 # PHP プログラムの実行
-cd docs/PHP
+cd /home/ec2-user/environment/docs/PHP
 php -S localhost:80 -c php.ini
 

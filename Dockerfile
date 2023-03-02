@@ -1,5 +1,5 @@
 FROM amazonlinux:2
-LABEL maintainer="infratop" \
+LABEL maintainer="DMM Webcamp" \
         description="Amazon Linux 2 with some development environments"
 
 # install amazon-linux-extras

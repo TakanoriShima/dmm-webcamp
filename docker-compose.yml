@@ -2,7 +2,9 @@ version: "3.7"
 
 services:
   amazonlinux2:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: dmm-webcamp
     privileged: true
     restart: always
