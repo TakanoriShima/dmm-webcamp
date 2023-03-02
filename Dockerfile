@@ -21,6 +21,7 @@ RUN yum update -y \
         gcc-c++ \
         bzip2 \
         readline-devel \
+        sqlite \
         sqlite-devel \
         passwd \
         ps \
@@ -67,7 +68,8 @@ RUN curl -L --compressed "https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YAR
 
 # install php7.4
 RUN sudo amazon-linux-extras install -y php7.4 \
-    && sudo yum install -y php-mbstring php-xml
+    && sudo yum clean metadata \
+    && sudo yum install -y php-mbstring php-xml php-cli php-pdo php-fpm php-json php-mysqlnd
 
 # install composer
 RUN sudo php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
@@ -85,20 +87,20 @@ RUN git clone https://github.com/sstephenson/rbenv.git ~/.rbenv \
     && source ~/.bash_profile \
     && source ~/.bashrc
 
-# install Ruby 3.1.2
+# # install Ruby 3.1.2
 ENV PATH $PATH:~/.rbenv/bin
 ENV PATH $PATH:~/.rbenv/shims
 RUN rbenv install ${RUBY_VERSION}
 RUN rbenv global ${RUBY_VERSION}
 
-# install Rails 6.1.4
+# # install Rails 6.1.4
 RUN gem install nokogiri -v ${NOKOGIRI_VERSION}
 RUN gem install rails -v ${RAILS_VERSION}
 
 # install SQLite 3.36.0
 RUN sudo wget https://www.sqlite.org/2021/sqlite-autoconf-3360000.tar.gz \
     && sudo tar xzvf sqlite-autoconf-3360000.tar.gz \
-    && sudo sqlite-autoconf-3360000/configure --prefix=/opt/sqlite/sqlite3 \ 
+    && sudo CFLAGS="-DSQLITE_ENABLE_COLUMN_METADATA=1" sqlite-autoconf-3360000/configure --prefix=/opt/sqlite/sqlite3 \ 
     && sudo make \
     && sudo make install \
     && /opt/sqlite/sqlite3/bin/sqlite3 --version \
@@ -116,7 +118,7 @@ RUN cd \
     && ./configure \
     && make \
     && sudo make install \
-    && sudo rm -rf /home/ec2-user/ImageMagick-7.0.11
+    && sudo rm -rf /home/${USERNAME}/ImageMagick-7.0.11
 
 # install MySQL 8.0
 # RUN sudo yum localinstall -y https://dev.mysql.com/get/mysql80-community-release-el7-5.noarch.rpm 
