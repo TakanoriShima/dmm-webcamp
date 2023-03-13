@@ -94,8 +94,12 @@ RUN rbenv install ${RUBY_VERSION}
 RUN rbenv global ${RUBY_VERSION}
 
 # # install Rails 6.1.4
+# $ nokogiri --version
+# Nokogiri (1.14.1)
 RUN gem install nokogiri -v ${NOKOGIRI_VERSION}
 RUN gem install rails -v ${RAILS_VERSION}
+# for MacM1
+RUN bundle config set --global force_ruby_platform true
 
 # install SQLite 3.36.0
 RUN sudo wget https://www.sqlite.org/2021/sqlite-autoconf-3360000.tar.gz \
