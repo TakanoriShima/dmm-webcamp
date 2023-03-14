@@ -31,12 +31,13 @@ RUN yum update -y \
         openssl-devel \
         zlib-devel \
         configure \
+        procps \
         -y
 
 # setenv
 ENV RUBY_VERSION="3.1.2" \
     RAILS_VERSION="6.1.4" \
-    NOKOGIRI_VERSION="1.14.1" \
+    # NOKOGIRI_VERSION="1.14.1" \
     YARN_VERSION="1.22.19" \
     USERNAME="ec2-user" \
     PASSWORD="password"
@@ -93,13 +94,10 @@ ENV PATH $PATH:~/.rbenv/shims
 RUN rbenv install ${RUBY_VERSION}
 RUN rbenv global ${RUBY_VERSION}
 
-# # install Rails 6.1.4
-# $ nokogiri --version
-# Nokogiri (1.14.1)
-RUN gem install nokogiri -v ${NOKOGIRI_VERSION}
+# install Nokogiri 1.14.1
+# RUN gem install nokogiri -v ${NOKOGIRI_VERSION}
+# install Rails 6.1.4
 RUN gem install rails -v ${RAILS_VERSION}
-# for MacM1
-RUN bundle config set --global force_ruby_platform true
 
 # install SQLite 3.36.0
 RUN sudo wget https://www.sqlite.org/2021/sqlite-autoconf-3360000.tar.gz \
@@ -131,8 +129,11 @@ RUN cd \
 # RUN sudo touch /var/log/mysqld.log 
 # RUN sudo systemctl enable mysqld
 
+# change user
+USER root
 # install MariaDB 10.5
 RUN sudo amazon-linux-extras install mariadb10.5 \
+    && sudo echo 'port=3307' >>  /etc/my.cnf \
     && sudo systemctl enable mariadb.service
 
 # customize ec2-user bash prompt
@@ -142,7 +143,7 @@ RUN echo 'source ~/prompt.sh' >> /home/${USERNAME}/.bashrc
 RUN echo 'source ~/prompt.sh' >> /home/${USERNAME}/.bash_profile
 
 # change user
-USER root
+# USER root
 
 COPY prompt.sh /root/prompt.sh
 RUN chmod 755 /root/prompt.sh 
